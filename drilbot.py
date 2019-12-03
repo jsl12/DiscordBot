@@ -2,60 +2,96 @@ import re
 from pathlib import Path
 from random import choice
 
+from typing import List
 import discord
 import twitter
 import yaml
 
-KEYWORDS = ['dick', 'trol', 'ass', 'cum', 'smok']
 
-apikey = Path('apikey.yaml')
+class DrilBot:
+    KEYWORDS = [
+        'dick',
+        'trol',
+        'ass',
+        'shit'
+        'cum',
+        'smok',
+        'media',
+        'otis',
+        'digimon',
+        'human',
+        'loyalty',
+        'youtube',
+        'celebs',
+        'girl'
+    ]
 
-with apikey.open('r') as file:
-    key = yaml.load(file, Loader=yaml.SafeLoader)
+    def __init__(self, apikey_path):
+        self.load_keys(apikey_path)
+        self.connect_to_twitter()
+        self.connect_to_discord()
 
-client = discord.Client()
-api = twitter.Api(
-    consumer_key=key['TWITTER']['API_KEY'],
-    consumer_secret=key['TWITTER']['API_SECRET_KEY'],
-    access_token_key=key['TWITTER']['ACCESS_TOKEN'],
-    access_token_secret=key['TWITTER']['ACCESS_TOKEN_SECRET']
-)
+    def load_keys(self, apikey_path):
+        if not isinstance(apikey_path, Path):
+            apikey_path = Path(apikey_path)
 
-@client.event
-async def on_ready():
-    print(f'connected as {client.user}')
+        with apikey_path.open('r') as file:
+            self.key = yaml.load(file, Loader=yaml.SafeLoader)
 
-@client.event
-async def on_message(msg: discord.Message):
-    if (msg.author == client.user) or (msg.channel.name != 'robotics-facility'):
-        return
+    def connect_to_twitter(self):
+        self.api = twitter.Api(
+            consumer_key=self.key['TWITTER']['API_KEY'],
+            consumer_secret=self.key['TWITTER']['API_SECRET_KEY'],
+            access_token_key=self.key['TWITTER']['ACCESS_TOKEN'],
+            access_token_secret=self.key['TWITTER']['ACCESS_TOKEN_SECRET']
+        )
 
-    if re.search('dril', msg.content):
-        for k in KEYWORDS:
-            if k in msg.content:
-                text = recent_keyword_tweet('dril', keyword=k).text
-                if text is not None:
-                    await msg.channel.send(text)
-                else:
-                    break
-                return
-        await msg.channel.send(random_tweet('dril'))
+    def connect_to_discord(self):
+        self.client = discord.Client()
 
-def random_tweet(screen_name:str , count=200) -> str:
-    return choice(recent_tweets(screen_name, count)).text
+    def run(self):
+        self.client.run(self.key['DISCORD_TOKEN'])
 
-def recent_tweets(screen_name: str, count:int = 200):
-    return api.GetUserTimeline(
-        screen_name=screen_name,
-        include_rts=False,
-        exclude_replies=True,
-        count=count
-    )
+    def get_tweets(self) -> List[twitter.Status]:
+        return self.api.GetUserTimeline(
+            screen_name='dril',
+            include_rts=False,
+            exclude_replies=True,
+            count=200
+        )
 
-def recent_keyword_tweet(screen_name:str, keyword:str, count:int = 200):
-    try:
-        return choice([tweet for tweet in recent_tweets(screen_name, count) if keyword in tweet.text])
-    except IndexError:
-        return
+    def get_keyword_tweets(self, keyword:str) -> List[twitter.Status]:
+        return [tweet for tweet in self.get_tweets() if keyword in tweet.text]
 
-client.run(key['DISCORD_TOKEN'])
+    def process_message(self, msg: discord.Message):
+        if msg.author == self.client.user:
+            return
+
+        if msg.channel.name != 'robotics-facility':
+            return
+
+        if re.search('dril', msg.content, re.IGNORECASE):
+            for k in self.KEYWORDS:
+                if re.search(k, msg.content, re.IGNORECASE):
+                    try:
+                        return choice(self.get_keyword_tweets(k)).text
+                    except IndexError:
+                        # no tweets found
+                        break
+            return choice(self.get_tweets()).text
+
+
+if __name__ == '__main__':
+    drilbot = DrilBot('apikey.yaml')
+
+    @drilbot.client.event
+    async def on_ready():
+        print(f'connected as {drilbot.client.user}')
+
+    @drilbot.client.event
+    async def on_message(msg: discord.Message):
+        response = drilbot.process_message(msg)
+        if response is not None:
+            await msg.channel.send(response)
+
+    drilbot.run()
