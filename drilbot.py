@@ -91,13 +91,18 @@ class DrilBot:
             res.extend([tweet for tweet in next_page if re.search(keyword, tweet.text, re.IGNORECASE)])
         return res
 
+    def print_keyword_tweets(self, keyword:str):
+        for t in self.get_keyword_tweets(keyword):
+            print(t.text)
+
     def process_message(self, msg: str):
         if re.search('dril', msg, re.IGNORECASE):
             for k in self.KEYWORDS:
                 if re.search(k, msg, re.IGNORECASE):
                     try:
-                        tweets = self.get_keyword_tweets(k)
-                        return choice(tweets).text
+                        self.relevant_tweets = self.get_keyword_tweets(k)
+                        self.last_tweet = choice(self.relevant_tweets)
+                        return self.last_tweet.text
                     except (IndexError, TypeError, twitter.error.TwitterError):
                         # no tweets found
                         print(f'No tweets found for {k}')
