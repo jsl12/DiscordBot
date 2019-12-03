@@ -52,16 +52,28 @@ class DrilBot:
     def run(self):
         self.client.run(self.key['DISCORD_TOKEN'])
 
-    def get_tweets(self) -> List[twitter.Status]:
+    def get_tweets(self, **kwargs) -> List[twitter.Status]:
         return self.api.GetUserTimeline(
             screen_name='dril',
             include_rts=False,
             exclude_replies=True,
-            count=200
+            count=200,
+            **kwargs
         )
 
-    def get_keyword_tweets(self, keyword:str) -> List[twitter.Status]:
-        return [tweet for tweet in self.get_tweets() if keyword in tweet.text]
+    def get_keyword_tweets(self, keyword:str, min:int = 5) -> List[twitter.Status]:
+        res = []
+        while len(res) < min:
+            try:
+                last_tweet = next_page[-1].id
+            except UnboundLocalError:
+                last_tweet = None
+            except IndexError:
+                # TODO figure out why this happens sometimes
+                break
+            next_page = self.get_tweets(max_id=last_tweet)
+            res.extend([tweet for tweet in next_page if re.search(keyword, tweet.text, re.IGNORECASE)])
+        return res
 
     def process_message(self, msg: discord.Message):
         if msg.author == self.client.user:
