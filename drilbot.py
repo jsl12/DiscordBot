@@ -23,7 +23,19 @@ class DrilBot:
         'loyalty',
         'youtube',
         'celebs',
-        'girl'
+        'girl',
+        'food',
+        'politics',
+        'culture',
+        'jack(ing)? off',
+        'dog',
+        'blue check mark',
+        'account',
+        'wisdom',
+        'sports',
+        'dinner',
+        'kfc',
+        'donald'
     ]
 
     def __init__(self, apikey_path):
