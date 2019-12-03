@@ -12,6 +12,7 @@ class DrilBot:
     KEYWORDS = [
         'dick',
         'trol',
+        '(?<=kick).*ass',
         'ass',
         'shit',
         'cum',
@@ -20,14 +21,13 @@ class DrilBot:
         'otis',
         'digimon',
         'human',
-        'loyalty',
         'youtube',
-        'celebs',
+        'celeb',
         'girl',
         'food',
-        'politics',
+        'politic',
         'culture',
-        'jack(ing)?(?=.*off)',
+        'jack(ing)?.*(?=off)',
         'dog',
         'blue check mark',
         'account',
@@ -39,7 +39,12 @@ class DrilBot:
         'donald',
         'dildo',
         'dipshit',
-        'tv'
+        'tv',
+        'sirgamestop',
+        'game',
+        'twitter',
+        'site',
+        'public'
     ]
 
     def __init__(self, apikey_path):
