@@ -124,13 +124,13 @@ if __name__ == '__main__':
 
     @drilbot.client.event
     async def on_message(msg: discord.Message):
-        if msg.author == self.client.user:
+        if msg.author == drilbot.client.user:
             return
 
         if msg.channel.name != 'robotics-facility':
             return
 
-        response = drilbot.process_message(msg.text)
+        response = drilbot.process_message(msg.content)
         if response is not None:
             await msg.channel.send(response)
 
