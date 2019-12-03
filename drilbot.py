@@ -13,7 +13,7 @@ class DrilBot:
         'dick',
         'trol',
         'ass',
-        'shit'
+        'shit',
         'cum',
         'smok',
         'media',
@@ -27,15 +27,19 @@ class DrilBot:
         'food',
         'politics',
         'culture',
-        'jack(ing)? off',
+        'jack(ing)?(?=.*off)',
         'dog',
         'blue check mark',
         'account',
         'wisdom',
         'sports',
         'dinner',
+        'lunch',
         'kfc',
-        'donald'
+        'donald',
+        'dildo',
+        'dipshit',
+        'tv'
     ]
 
     def __init__(self, apikey_path):
