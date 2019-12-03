@@ -9,54 +9,17 @@ import yaml
 
 
 class DrilBot:
-    KEYWORDS = [
-        'dick',
-        'trol',
-        '(?<=kick).*ass',
-        'fat.*(?=ass)'
-        'ass',
-        'shit',
-        'cum',
-        'smok',
-        'media',
-        'otis',
-        'digimon',
-        'human',
-        'youtube',
-        'celeb',
-        'girl',
-        'food',
-        'politic',
-        'culture',
-        'jack(ing)?.*(?=off)',
-        'dog',
-        'blue check mark',
-        'account',
-        'wisdom',
-        'sports',
-        'dinner',
-        'lunch',
-        'kfc',
-        'donald',
-        'dildo',
-        'dipshit',
-        'tv',
-        'sirgamestop',
-        'game',
-        'twitter',
-        'site',
-        'public',
-        'pussy',
-        'pill',
-        'loyal'
-    ]
-
     def __init__(self, apikey_path):
-        self.load_keys(apikey_path)
+        self.load_api_keys(apikey_path)
         self.connect_to_twitter()
         self.connect_to_discord()
+        self.load_keywords()
 
-    def load_keys(self, apikey_path):
+    def load_keywords(self):
+        with Path('dril.yaml').open('r') as file:
+            self.KEYWORDS = yaml.load(file, Loader=yaml.SafeLoader)['KEYWORDS']
+
+    def load_api_keys(self, apikey_path):
         if not isinstance(apikey_path, Path):
             apikey_path = Path(apikey_path)
 
