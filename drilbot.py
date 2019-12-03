@@ -87,20 +87,16 @@ class DrilBot:
             res.extend([tweet for tweet in next_page if re.search(keyword, tweet.text, re.IGNORECASE)])
         return res
 
-    def process_message(self, msg: discord.Message):
-        if msg.author == self.client.user:
-            return
-
-        if msg.channel.name != 'robotics-facility':
-            return
-
-        if re.search('dril', msg.content, re.IGNORECASE):
+    def process_message(self, msg: str):
+        if re.search('dril', msg, re.IGNORECASE):
             for k in self.KEYWORDS:
-                if re.search(k, msg.content, re.IGNORECASE):
+                if re.search(k, msg, re.IGNORECASE):
                     try:
-                        return choice(self.get_keyword_tweets(k)).text
-                    except IndexError:
+                        tweets = self.get_keyword_tweets(k)
+                        return choice(tweets).text
+                    except (IndexError, TypeError, twitter.error.TwitterError):
                         # no tweets found
+                        print(f'No tweets found for {k}')
                         break
             return choice(self.get_tweets()).text
 
@@ -114,7 +110,13 @@ if __name__ == '__main__':
 
     @drilbot.client.event
     async def on_message(msg: discord.Message):
-        response = drilbot.process_message(msg)
+        if msg.author == self.client.user:
+            return
+
+        if msg.channel.name != 'robotics-facility':
+            return
+
+        response = drilbot.process_message(msg.text)
         if response is not None:
             await msg.channel.send(response)
 
