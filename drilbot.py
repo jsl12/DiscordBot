@@ -13,6 +13,7 @@ class DrilBot:
         'dick',
         'trol',
         '(?<=kick).*ass',
+        'fat.*(?=ass)'
         'ass',
         'shit',
         'cum',
@@ -44,7 +45,10 @@ class DrilBot:
         'game',
         'twitter',
         'site',
-        'public'
+        'public',
+        'pussy',
+        'pill',
+        'loyal'
     ]
 
     def __init__(self, apikey_path):
