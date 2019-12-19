@@ -1,8 +1,8 @@
 import re
 from pathlib import Path
 from random import choice
-
 from typing import List
+
 import discord
 import twitter
 import yaml
@@ -69,6 +69,12 @@ class DrilBot:
 
     def process_message(self, msg: str):
         if re.search('dril', msg, re.IGNORECASE):
+            if msg == 'dril commands':
+                res = 'drilbot has the following commands:\n'
+                for key in self.KEYWORDS:
+                    res += f' - {key}\n'
+                return res
+
             for k in self.KEYWORDS:
                 if re.search(k, msg, re.IGNORECASE):
                     try:
