@@ -18,7 +18,10 @@ class DrilBot(Scraper):
         if cfg_path is not None:
             self.CFG = cfg_path
         self.load_tweets()
+        self.init_table()
         self.client = discord.Client()
+
+    def init_table(self):
         self.table = {key: super(DrilBot, self).get_keyword_tweets(key) for key in self.keywords}
         self.table = {key: tweets for key, tweets in self.table.items() if len(tweets) > 0}
 
