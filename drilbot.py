@@ -1,95 +1,80 @@
 import re
 from pathlib import Path
 from random import choice
-from typing import List
 
 import discord
-import twitter
 import yaml
 
+from scraper import Scraper
 
-class DrilBot:
-    def __init__(self, apikey_path):
-        self.load_api_keys(apikey_path)
-        self.connect_to_twitter()
-        self.connect_to_discord()
-        self.load_keywords()
 
-    def load_keywords(self):
-        with Path('dril.yaml').open('r') as file:
-            self.KEYWORDS = yaml.load(file, Loader=yaml.SafeLoader)['KEYWORDS']
-
-    def load_api_keys(self, apikey_path):
-        if not isinstance(apikey_path, Path):
-            apikey_path = Path(apikey_path)
-
-        with apikey_path.open('r') as file:
-            self.key = yaml.load(file, Loader=yaml.SafeLoader)
-
-    def connect_to_twitter(self):
-        self.api = twitter.Api(
-            consumer_key=self.key['TWITTER']['API_KEY'],
-            consumer_secret=self.key['TWITTER']['API_SECRET_KEY'],
-            access_token_key=self.key['TWITTER']['ACCESS_TOKEN'],
-            access_token_secret=self.key['TWITTER']['ACCESS_TOKEN_SECRET']
-        )
-
-    def connect_to_discord(self):
+class DrilBot(Scraper):
+    CFG = 'dril.yaml'
+    def __init__(self, cfg_path=None):
+        if cfg_path is not None:
+            self.CFG = cfg_path
+        self.load_tweets()
         self.client = discord.Client()
 
     def run(self):
-        self.client.run(self.key['DISCORD_TOKEN'])
+        self.client.run(self.api_key['DISCORD_TOKEN'])
 
-    def get_tweets(self, **kwargs) -> List[twitter.Status]:
-        return self.api.GetUserTimeline(
-            screen_name='dril',
-            include_rts=False,
-            exclude_replies=True,
-            count=200,
-            **kwargs
-        )
+    @property
+    def cfg(self):
+        with Path(self.CFG).open('r') as file:
+            return yaml.load(file, Loader=yaml.SafeLoader)
 
-    def get_keyword_tweets(self, keyword:str, min:int = 5) -> List[twitter.Status]:
-        res = []
-        while len(res) < min:
-            try:
-                last_tweet = next_page[-1].id
-            except UnboundLocalError:
-                last_tweet = None
-            except IndexError:
-                # TODO figure out why this happens sometimes
-                break
-            next_page = self.get_tweets(max_id=last_tweet)
-            res.extend([tweet for tweet in next_page if re.search(keyword, tweet.text, re.IGNORECASE)])
-        return res
+    @property
+    def api_key(self):
+        with Path(self.cfg['API']).open('r') as file:
+            return yaml.load(file, Loader=yaml.SafeLoader)
+
+    @property
+    def keywords(self):
+        return self.cfg['KEYWORDS']
+
+    def load_tweets(self):
+        return super().load_tweets(self.cfg['TWEETS'])
 
     def print_keyword_tweets(self, keyword:str):
         for t in self.get_keyword_tweets(keyword):
             print(t.text)
 
+    def get_user_tweets(self, count=200, **kwargs):
+        if not hasattr(self, 'api'):
+            self.connect(self.cfg['API'])
+        return super().get_user_tweets(user='dril', count=count, **kwargs)
+
     def process_message(self, msg: str):
         if re.search('dril', msg, re.IGNORECASE):
             if msg == 'dril commands':
                 res = 'drilbot has the following commands:\n'
-                for key in self.KEYWORDS:
+                for key in self.keywords:
                     res += f' - {key}\n'
                 return res
 
-            for k in self.KEYWORDS:
-                if re.search(k, msg, re.IGNORECASE):
+            m = re.search('dril\[(-?\d+)\]', msg)
+            if m is not None:
+                return self.tweets[int(m.group(1))].text
+
+            for k in self.keywords:
+                m = re.search(k, msg, re.IGNORECASE)
+                if m is not None:
                     try:
+                        print(m.string[:m.start()] + f'({m.group()})' + m.string[m.end():])
                         self.relevant_tweets = self.get_keyword_tweets(k)
                         self.last_tweet = choice(self.relevant_tweets)
                         return self.last_tweet.text
-                    except (IndexError, TypeError, twitter.error.TwitterError):
+                    except (IndexError, TypeError):
                         # no tweets found
                         print(f'No tweets found for {k}')
                         break
-            return choice(self.get_tweets()).text
+
+            return choice(self.tweets).text
 
 
 if __name__ == '__main__':
-    drilbot = DrilBot('apikey.yaml')
+    drilbot = DrilBot()
 
     @drilbot.client.event
     async def on_ready():
@@ -98,6 +83,17 @@ if __name__ == '__main__':
     @drilbot.client.event
     async def on_message(msg: discord.Message):
         if msg.author == drilbot.client.user:
+            return
+
+        m = re.search('dril is (playing|listening|watching) ([\w ]+)', msg.content)
+        if m is not None:
+            print(f'Status: {m.group(1)} {m.group(2)}')
+            if m.group(1) == 'playing':
+                await drilbot.client.change_presence(activity=discord.Game(m.group((2))))
+            elif m.group(1) == 'listening':
+                await drilbot.client.change_presence(activity=discord.Activity(name=m.group(2), type=discord.ActivityType.listening))
+            elif m.group(1) == 'watching':
+                await drilbot.client.change_presence(activity=discord.Activity(name=m.group(2), type=discord.ActivityType.watching))
             return
 
         if msg.channel.name != 'robotics-facility':
