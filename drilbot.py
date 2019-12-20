@@ -88,6 +88,8 @@ class DrilBot(Scraper):
 if __name__ == '__main__':
     drilbot = DrilBot()
 
+    CHANNEL_WHITELIST = ['robotics-facility', 'star-wars-shit']
+
     @drilbot.client.event
     async def on_ready():
         print(f'connected as {drilbot.client.user}')
@@ -108,14 +110,14 @@ if __name__ == '__main__':
                 await drilbot.client.change_presence(activity=discord.Activity(name=m.group(2), type=discord.ActivityType.watching))
             return
 
-        if msg.channel.name != 'robotics-facility':
+        if msg.channel.name not in CHANNEL_WHITELIST:
             return
-
-        response = drilbot.process_message(msg.content)
-        if response is not None:
-            if isinstance(response, twitter.Status):
-                drilbot.last_tweet = response
-                response = response.text
-            await msg.channel.send(response)
+        else:
+            response = drilbot.process_message(msg.content)
+            if response is not None:
+                if isinstance(response, twitter.Status):
+                    drilbot.last_tweet = response
+                    response = response.text
+                await msg.channel.send(response)
 
     drilbot.run()
