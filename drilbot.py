@@ -1,8 +1,10 @@
 import re
 from pathlib import Path
 from random import choice
+from typing import List
 
 import discord
+import twitter
 import yaml
 
 from scraper import Scraper
@@ -10,11 +12,15 @@ from scraper import Scraper
 
 class DrilBot(Scraper):
     CFG = 'dril.yaml'
+    REGEX_INDEX = re.compile('dril\[(-?\d+)\]')
+
     def __init__(self, cfg_path=None):
         if cfg_path is not None:
             self.CFG = cfg_path
         self.load_tweets()
         self.client = discord.Client()
+        self.table = {key: super(DrilBot, self).get_keyword_tweets(key) for key in self.keywords}
+        self.table = {key: tweets for key, tweets in self.table.items() if len(tweets) > 0}
 
     def run(self):
         self.client.run(self.api_key['DISCORD_TOKEN'])
@@ -46,32 +52,38 @@ class DrilBot(Scraper):
         return super().get_user_tweets(user='dril', count=count, **kwargs)
 
     def process_message(self, msg: str):
-        if re.search('dril', msg, re.IGNORECASE):
-            if msg == 'dril commands':
-                res = 'drilbot has the following commands:\n'
-                for key in self.keywords:
-                    res += f' - {key}\n'
-                return res
+        if 'dril' in msg:
+            match_index = self.REGEX_INDEX.search(msg)
+            match_keyword = self.keyword_tweet(msg)
 
-            m = re.search('dril\[(-?\d+)\]', msg)
+            if msg == 'dril keywords':
+                # this is like the help command
+                return self.print_keywords()
+            elif match_index is not None:
+                # looks for something like 'dril[0]' which would be the first (most recent) tweet
+                return self.tweets[int(m.group(1))]
+            elif match_keyword:
+                # looks for some kind of keyword based on dril.yaml
+                return match_keyword
+            else:
+                # in the default case, just return a random tweet
+                return choice(self.tweets)
+
+    def print_keywords(self):
+        res = 'drilbot has the following keywords:\n'
+        for key in self.keywords:
+            res += f' - {key}\n'
+        return res
+
+    def keyword_tweet(self, msg:str):
+        for k in self.keywords:
+            m = re.search(k, msg, re.IGNORECASE)
             if m is not None:
-                return self.tweets[int(m.group(1))].text
+                print(m.string[:m.start()] + f'({m.group()})' + m.string[m.end():])
+                return choice(self.get_keyword_tweets(k))
 
-            for k in self.keywords:
-                m = re.search(k, msg, re.IGNORECASE)
-                if m is not None:
-                    try:
-                        print(m.string[:m.start()] + f'({m.group()})' + m.string[m.end():])
-                        self.relevant_tweets = self.get_keyword_tweets(k)
-                        self.last_tweet = choice(self.relevant_tweets)
-                        return self.last_tweet.text
-                    except (IndexError, TypeError):
-                        # no tweets found
-                        print(f'No tweets found for {k}')
-                        break
-
-            return choice(self.tweets).text
-
+    def get_keyword_tweets(self, keyword:str) -> List[twitter.Status]:
+        return self.table[keyword]
 
 if __name__ == '__main__':
     drilbot = DrilBot()
@@ -101,6 +113,9 @@ if __name__ == '__main__':
 
         response = drilbot.process_message(msg.content)
         if response is not None:
+            if isinstance(response, twitter.Status):
+                drilbot.last_tweet = response
+                response = response.text
             await msg.channel.send(response)
 
     drilbot.run()

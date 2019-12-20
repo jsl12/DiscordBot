@@ -67,7 +67,7 @@ class Scraper:
                 self.tweets.extend(loaded_tweets)
             else:
                 self.tweets = loaded_tweets
-        self.sort_by('id')
+        self.clean()
         return self.tweets
 
     @property
