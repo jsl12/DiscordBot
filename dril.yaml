@@ -1,8 +1,8 @@
+API: 'apikey.yaml'
+TWEETS: 'dril.pickle'
 KEYWORDS:
   - dick
-  - (?<=kick).*ass
-  - fat.*(?=ass)
-  - ass
+  - (fat|kick)?[\w ]*ass(hole)?
   - shit
   - pussy
   - trol
@@ -19,10 +19,10 @@ KEYWORDS:
   - human
   - celeb
   - girl
-  - jack(ing)?.*(?=off)
+  - jack(ing)?[\w ]*(off)?
   - dog
   - blue check mark
-  - accounr
+  - account
   - wisdom
   - sports
   - dinner
@@ -32,7 +32,7 @@ KEYWORDS:
   - dildo
   - dipshit
   - tv
-  - sirgamestop
+  - gamestop
   - gamer
   - game
   - twitter
@@ -42,3 +42,6 @@ KEYWORDS:
   - loyal
   - poison
   - hentai
+  - hell
+  - (star[\w ]*wars| SW | sw )
+  - bra
