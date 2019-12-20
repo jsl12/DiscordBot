@@ -13,6 +13,7 @@ from scraper import Scraper
 class DrilBot(Scraper):
     CFG = 'dril.yaml'
     REGEX_INDEX = re.compile('dril\[(-?\d+)\]')
+    REGEX_ADD_KEYWORD = re.compile('^dril add "(.*)"$')
 
     def __init__(self, cfg_path=None):
         if cfg_path is not None:
@@ -57,11 +58,14 @@ class DrilBot(Scraper):
     def process_message(self, msg: str):
         if 'dril' in msg:
             match_index = self.REGEX_INDEX.search(msg)
+            match_add_keyword = self.REGEX_ADD_KEYWORD.search(msg)
             match_keyword = self.keyword_tweet(msg)
 
             if msg == 'dril keywords':
                 # this is like the help command
                 return self.print_keywords()
+            elif match_add_keyword is not None:
+                self.add_keyword(match_add_keyword.group(1))
             elif match_index is not None:
                 # looks for something like 'dril[0]' which would be the first (most recent) tweet
                 return self.tweets[int(m.group(1))]
@@ -71,6 +75,13 @@ class DrilBot(Scraper):
             else:
                 # in the default case, just return a random tweet
                 return choice(self.tweets)
+
+    def add_keyword(self, new_keyword):
+        with Path(self.CFG).open('r') as file:
+            cfg = yaml.load(file, Loader=yaml.SafeLoader)
+        cfg['KEYWORDS'].append(new_keyword)
+        with Path(self.CFG).open('w') as file:
+            yaml.dump(cfg, file, Dumper=yaml.SafeDumper)
 
     def print_keywords(self):
         res = 'drilbot has the following keywords:\n'
