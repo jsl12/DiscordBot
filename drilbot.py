@@ -53,7 +53,13 @@ class DrilBot(Scraper):
     def get_user_tweets(self, count=200, **kwargs):
         if not hasattr(self, 'api'):
             self.connect(self.cfg['API'])
-        return super().get_user_tweets(user='dril', count=count, **kwargs)
+        kwargs['user'] = 'dril'
+        return super(DrilBot, self).get_user_tweets(count=count, **kwargs)
+
+    def get_older_tweets(self, count=200, **kwargs):
+        if not hasattr(self, 'api'):
+            self.connect(self.cfg['API'])
+        return super().get_older_tweets(user='dril', count=count, **kwargs)
 
     def process_message(self, msg: str):
         if 'dril' in msg:
