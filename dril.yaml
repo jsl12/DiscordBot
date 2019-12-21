@@ -1,47 +1,50 @@
-API: 'apikey.yaml'
-TWEETS: 'dril.pickle'
+API: apikey.yaml
 KEYWORDS:
-  - dick
-  - (fat|kick)?[\w ]*ass(hole)?
-  - shit
-  - pussy
-  - trol
-  - hater
-  - cum
-  - smok
-  - media
-  - youtube
-  - politic
-  - culture
-  - smok
-  - digimon
-  - otis
-  - human
-  - celeb
-  - girl
-  - jack(ing)?[\w ]*(off)?
-  - dog
-  - blue check mark
-  - account
-  - wisdom
-  - sports
-  - dinner
-  - lunch
-  - kfc
-  - donald
-  - dildo
-  - dipshit
-  - tv
-  - gamestop
-  - gamer
-  - game
-  - twitter
-  - site
-  - public
-  - pill
-  - loyal
-  - poison
-  - hentai
-  - hell
-  - (star[\w ]*wars| SW | sw )
-  - bra
+- dick
+- (fat|kick)?[\w ]*ass(hole)?
+- shit
+- pussy
+- trol
+- hater
+- cum
+- smok
+- media
+- youtube
+- politic
+- culture
+- smok
+- digimon
+- otis
+- human
+- celeb
+- girl
+- jack(ing)?[\w ]*(off)?
+- dog
+- blue check mark
+- account
+- wisdom
+- sports
+- dinner
+- lunch
+- kfc
+- donald
+- dildo
+- dipshit
+- tv
+- gamestop
+- gamer
+- game
+- twitter
+- site
+- public
+- pill
+- loyal
+- poison
+- hentai
+- hell
+- (star[\w ]*wars| SW | sw )
+- bra
+- bush
+- cocaine
+- pud
+TWEETS: dril.pickle

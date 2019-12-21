@@ -19,12 +19,7 @@ class DrilBot(Scraper):
         if cfg_path is not None:
             self.CFG = cfg_path
         self.load_tweets()
-        self.init_table()
         self.client = discord.Client()
-
-    def init_table(self):
-        self.table = {key: super(DrilBot, self).get_keyword_tweets(key) for key in self.keywords}
-        self.table = {key: tweets for key, tweets in self.table.items() if len(tweets) > 0}
 
     def run(self):
         self.client.run(self.api_key['DISCORD_TOKEN'])
@@ -44,7 +39,13 @@ class DrilBot(Scraper):
         return self.cfg['KEYWORDS']
 
     def load_tweets(self):
-        return super().load_tweets(self.cfg['TWEETS'])
+        super().load_tweets(self.cfg['TWEETS'])
+        self.init_table()
+        return self.tweets
+
+    def init_table(self):
+        self.table = {key: super(DrilBot, self).get_keyword_tweets(key) for key in self.keywords}
+        self.table = {key: tweets for key, tweets in self.table.items() if len(tweets) > 0}
 
     def print_keyword_tweets(self, keyword:str):
         for t in self.get_keyword_tweets(keyword):
@@ -72,6 +73,8 @@ class DrilBot(Scraper):
                 return self.print_keywords()
             elif match_add_keyword is not None:
                 self.add_keyword(match_add_keyword.group(1))
+                return f'i added {match_add_keyword.group(1)} you fucking trol'
+                self.init_table()
             elif match_index is not None:
                 # looks for something like 'dril[0]' which would be the first (most recent) tweet
                 return self.tweets[int(m.group(1))]
@@ -100,10 +103,24 @@ class DrilBot(Scraper):
             m = re.search(k, msg, re.IGNORECASE)
             if m is not None:
                 print(m.string[:m.start()] + f'({m.group()})' + m.string[m.end():])
-                return choice(self.get_keyword_tweets(k))
+                tweets = self.get_keyword_tweets(k)
+                if tweets:
+                    return choice(tweets)
 
     def get_keyword_tweets(self, keyword:str) -> List[twitter.Status]:
-        return self.table[keyword]
+        try:
+            return self.table[keyword]
+        except KeyError:
+            return []
+
+    @property
+    def robotics_channel(self) -> discord.TextChannel:
+        for chan in self.client.get_all_channels():
+            if 'robot' in chan.name:
+                return chan
+
+    async def send(self, msg:str):
+        await self.robotics_channel.send(msg)
 
 if __name__ == '__main__':
     drilbot = DrilBot()
